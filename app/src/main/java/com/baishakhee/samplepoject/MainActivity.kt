@@ -6,11 +6,15 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.baishakhee.samplepoject.adapter.TaskAdapter
 import com.baishakhee.samplepoject.databinding.ActivityMainBinding
 import com.baishakhee.samplepoject.model.TaskModel
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -24,6 +28,8 @@ class MainActivity : AppCompatActivity() {
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
         binding.recyclerView.adapter = adapter
         binding.addTaskButton.setOnClickListener {
+
+            
             showBottomSheetDialog();
 
         }
@@ -63,20 +69,32 @@ class MainActivity : AppCompatActivity() {
 
         submitButton.setOnClickListener {
 
-            val taskId = "Task ID : "+taskIdEditText.text.toString()
-            val taskName = "Task Name : "+taskNameEditText.text.toString()
-            val taskDate = "Task Date : "+taskDateEditText.text.toString()
-            val taskDescription = "Task Description : "+taskDescriptionEditText.text.toString()
+            val taskId = "Task ID : ${taskIdEditText.text.toString()}"
+            val taskName = "Task Name : ${taskNameEditText.text.toString()}"
+            val taskDate = "Task Date : ${taskDateEditText.text.toString()}"
+            val taskDescription = "Task Description : ${taskDescriptionEditText.text.toString()}"
 
             // Create a Task object and add it to the list
             val task = TaskModel(taskId, taskName, taskDate, taskDescription)
             taskList.add(task)
             adapter.notifyDataSetChanged()
-
-            bottomSheetDialog.dismiss()
+            // Use a coroutine to update the UI and add the task to the list
+            lifecycleScope.launch(Dispatchers.IO) {
+                val task = TaskModel(taskId, taskName, taskDate, taskDescription)
+                addTask(task)
+                withContext(Dispatchers.Main) {
+                    adapter.notifyDataSetChanged()
+                    bottomSheetDialog.dismiss()
+                }
+            }
         }
 
 
         bottomSheetDialog.show()
+    }
+
+    private fun addTask(task: TaskModel) {
+        taskList.add(task)
+
     }
 }
